@@ -18,9 +18,9 @@
 <meta property="og:description" content="kubelt代码剖析Container Runtime Interface（CRI）&amp;ensp;&amp;ensp;CRI定义了与容器运行时交互的接口，用于将K8S与特定的容器运行时解绑。下图展示kubelet、shim、container runtime、 runc之间关系。k8s 1.24前dockershim集成在kubelet中，docker是默认的容器引擎。我工作中在用dockershim，下面">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://zhangzhangzf.github.io/images/shim.png">
-<meta property="og:image" content="https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/cri/cri/%5Cimages%5Ccri.png">
+<meta property="og:image" content="https://zhangzhangzf.github.io/images/cri.png">
 <meta property="article:published_time" content="2022-10-04T14:10:33.673Z">
-<meta property="article:modified_time" content="2022-10-05T09:25:21.934Z">
+<meta property="article:modified_time" content="2022-10-05T09:44:43.899Z">
 <meta property="article:author" content="二明">
 <meta property="article:tag" content="docker、kubernetes、istio、jaeger、runc、etcd、flannel、calico...">
 <meta name="twitter:card" content="summary">
@@ -257,7 +257,7 @@
 <li>拼接docker相关接口需要的参数</li>
 <li>调用docker接口。<br>下面以创建容器举例说明。</li>
 </ul>
-<p><img src="%5Cimages%5Ccri.png"></p>
+<p><img src="/images/cri.png"></p>
 
     
 
