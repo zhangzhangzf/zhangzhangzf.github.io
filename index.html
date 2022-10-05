@@ -232,12 +232,62 @@
             
 
   
-    <article id="post-k8s/kubelet/pod启动/New Document" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-k8s/kubelet/cni/flannel" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
   <div class="article-entry" itemprop="articleBody">
     
-    <p>#kubelt代码剖析<br>##Pod启动流程</p>
+    <h1 id="flannel源码剖析"><a href="#flannel源码剖析" class="headerlink" title="flannel源码剖析"></a>flannel源码剖析</h1>
+    
+
+    
+
+    
+
+  </div>
+  <div class="article-info article-info-index">
+    
+    
+    
+
+    
+    <p class="article-more-link">
+      <a class="article-more-a" href="/2022/10/05/k8s/kubelet/cni/flannel/">展开全文 >></a>
+    </p>
+    
+
+    
+    <div class="clearfix"></div>
+  </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-k8s/kubelet/pod启动/pod_start" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+  <div class="article-entry" itemprop="articleBody">
+    
+    <h1 id="kubelt代码剖析"><a href="#kubelt代码剖析" class="headerlink" title="kubelt代码剖析"></a>kubelt代码剖析</h1><h2 id="Pod启动流程"><a href="#Pod启动流程" class="headerlink" title="Pod启动流程"></a>Pod启动流程</h2><p>本节主要讨论Kubelet pod调谐流程。</p>
 
     
 
@@ -253,7 +303,7 @@
 
     
     <p class="article-more-link">
-      <a class="article-more-a" href="/2022/10/04/k8s/kubelet/pod%E5%90%AF%E5%8A%A8/New%20Document/">展开全文 >></a>
+      <a class="article-more-a" href="/2022/10/04/k8s/kubelet/pod%E5%90%AF%E5%8A%A8/pod_start/">展开全文 >></a>
     </p>
     
 
@@ -288,7 +338,7 @@
     
   <div class="article-entry" itemprop="articleBody">
     
-    <h1 id="kubelt代码剖析"><a href="#kubelt代码剖析" class="headerlink" title="kubelt代码剖析"></a>kubelt代码剖析</h1><h2 id="Container-Runtime-Interface（CRI）"><a href="#Container-Runtime-Interface（CRI）" class="headerlink" title="Container Runtime Interface（CRI）"></a>Container Runtime Interface（CRI）</h2><p>&ensp;&ensp;CRI定义了与容器运行时交互的接口，用于将K8S与特定的容器运行时解绑。下图展示kubelet、shim、container runtime、 runc之间关系。k8s 1.24前dockershim集成在kubelet中，docker是默认的容器引擎。<br>我工作中在用dockershim，下面以dockershim分析CRI。</p>
+    <h1 id="kubelt源码剖析"><a href="#kubelt源码剖析" class="headerlink" title="kubelt源码剖析"></a>kubelt源码剖析</h1><h2 id="Container-Runtime-Interface（CRI）"><a href="#Container-Runtime-Interface（CRI）" class="headerlink" title="Container Runtime Interface（CRI）"></a>Container Runtime Interface（CRI）</h2><p>&ensp;&ensp;CRI定义了与容器运行时交互的接口，用于将K8S与特定的容器运行时解绑。下图展示kubelet、shim、container runtime、 runc之间关系。k8s 1.24前dockershim集成在kubelet中，docker是默认的容器引擎。</p>
 <p><img src="/images/shim.png"><br>&ensp;&ensp;kubelet 使用 gRPC 框架通过 UNIX Socket 与容器运行时（或CRl代理）进行通信。在这个过程中 kubelet 是客户端，CRI 代理（shim）是服务端。<br>Protocol Buffers API 包含两个 gRPC 服务：ImageService 和 RuntimeService。</p>
 <ul>
 <li><p>ImageService 提供镜像服务，从仓库拉取镜像、查看和删除镜像的功能。</p>

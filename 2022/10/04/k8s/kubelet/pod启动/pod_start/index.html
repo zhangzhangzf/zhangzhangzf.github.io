@@ -10,15 +10,15 @@
   <meta name="generator" content="hexo-theme-yilia-plus">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   
-  <meta name="description" content="#kubelt代码剖析##Pod启动流程">
+  <meta name="description" content="kubelt代码剖析Pod启动流程本节主要讨论Kubelet pod调谐流程。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="云原生">
-<meta property="og:url" content="https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/pod%E5%90%AF%E5%8A%A8/New%20Document/index.html">
+<meta property="og:url" content="https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/pod%E5%90%AF%E5%8A%A8/pod_start/index.html">
 <meta property="og:site_name" content="云原生">
-<meta property="og:description" content="#kubelt代码剖析##Pod启动流程">
+<meta property="og:description" content="kubelt代码剖析Pod启动流程本节主要讨论Kubelet pod调谐流程。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-10-04T15:54:37.253Z">
-<meta property="article:modified_time" content="2022-10-04T15:54:37.415Z">
+<meta property="article:modified_time" content="2022-10-05T13:49:47.212Z">
 <meta property="article:author" content="二明">
 <meta property="article:tag" content="docker、kubernetes、istio、jaeger、runc、etcd、flannel、calico...">
 <meta name="twitter:card" content="summary">
@@ -227,12 +227,12 @@
               class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-k8s/kubelet/pod启动/New Document" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-k8s/kubelet/pod启动/pod_start" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
   <div class="article-entry" itemprop="articleBody">
     
-    <p>#kubelt代码剖析<br>##Pod启动流程</p>
+    <h1 id="kubelt代码剖析"><a href="#kubelt代码剖析" class="headerlink" title="kubelt代码剖析"></a>kubelt代码剖析</h1><h2 id="Pod启动流程"><a href="#Pod启动流程" class="headerlink" title="Pod启动流程"></a>Pod启动流程</h2><p>本节主要讨论Kubelet pod调谐流程。</p>
 
     
 
@@ -279,7 +279,7 @@
         </li>
         <li>
           <strong>本文链接：</strong>
-          <a href="https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/pod启动/New Document/" title="" target="_blank">https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/pod启动/New Document/</a>
+          <a href="https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/pod启动/pod_start/" title="" target="_blank">https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/pod启动/pod_start/</a>
         </li>
         
         <li>
@@ -346,7 +346,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-     <!-- <img src="//pan.baidu.com/share/qrcode?url=https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/pod%E5%90%AF%E5%8A%A8/New%20Document/" alt="微信分享二维码"> -->
+     <!-- <img src="//pan.baidu.com/share/qrcode?url=https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/pod%E5%90%AF%E5%8A%A8/pod_start/" alt="微信分享二维码"> -->
     </div>
 </div>
 
@@ -360,6 +360,15 @@
 
 
 <nav id="article-nav">
+  
+    <a href="/2022/10/05/k8s/kubelet/cni/flannel/" id="article-nav-newer" class="article-nav-link-wrap">
+      <i class="icon-circle-left"></i>
+      <div class="article-nav-title">
+        
+          (no title)
+        
+      </div>
+    </a>
   
   
     <a href="/2022/10/04/k8s/kubelet/cri/cri/" id="article-nav-older" class="article-nav-link-wrap">
