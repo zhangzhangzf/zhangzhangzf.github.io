@@ -17,14 +17,14 @@
 <meta property="og:site_name" content="云原生">
 <meta property="og:description" content="kubelt代码剖析Container Runtime Interface（CRI）&amp;ensp;&amp;ensp;CRI定义了与容器运行时交互的接口，用于将K8S与特定的容器运行时解绑。下图展示kubelet、shim、container runtime、 runc之间关系。k8s 1.24前dockershim集成在kubelet中，docker是默认的容器引擎。我工作中在用dockershim，下面">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/cri/cri/shim.png">
-<meta property="og:image" content="https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/cri/cri/cri.png">
+<meta property="og:image" content="https://zhangzhangzf.github.io/images/shim.png">
+<meta property="og:image" content="https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/cri/cri/%5Cimages%5Ccri.png">
 <meta property="article:published_time" content="2022-10-04T14:10:33.673Z">
-<meta property="article:modified_time" content="2022-10-05T09:03:00.353Z">
+<meta property="article:modified_time" content="2022-10-05T09:15:45.104Z">
 <meta property="article:author" content="二明">
 <meta property="article:tag" content="docker、kubernetes、istio、jaeger、runc、etcd、flannel、calico...">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/cri/cri/shim.png">
+<meta name="twitter:image" content="https://zhangzhangzf.github.io/images/shim.png">
   
     <link rel="alternative" href="/atom.xml" title="云原生" type="application/atom+xml">
   
@@ -236,7 +236,7 @@
   <div class="article-entry" itemprop="articleBody">
     
     <h1 id="kubelt代码剖析"><a href="#kubelt代码剖析" class="headerlink" title="kubelt代码剖析"></a>kubelt代码剖析</h1><h2 id="Container-Runtime-Interface（CRI）"><a href="#Container-Runtime-Interface（CRI）" class="headerlink" title="Container Runtime Interface（CRI）"></a>Container Runtime Interface（CRI）</h2><p>&ensp;&ensp;CRI定义了与容器运行时交互的接口，用于将K8S与特定的容器运行时解绑。下图展示kubelet、shim、container runtime、 runc之间关系。k8s 1.24前dockershim集成在kubelet中，docker是默认的容器引擎。<br>我工作中在用dockershim，下面以dockershim分析CRI。</p>
-<p><img src="shim.png"><br>&ensp;&ensp;kubelet 使用 gRPC 框架通过 UNIX Socket 与容器运行时（或CRl代理）进行通信。在这个过程中 kubelet 是客户端，CRI 代理（shim）是服务端。<br>Protocol Buffers API 包含两个 gRPC 服务：ImageService 和 RuntimeService。</p>
+<p><img src="/images/shim.png"><br>&ensp;&ensp;kubelet 使用 gRPC 框架通过 UNIX Socket 与容器运行时（或CRl代理）进行通信。在这个过程中 kubelet 是客户端，CRI 代理（shim）是服务端。<br>Protocol Buffers API 包含两个 gRPC 服务：ImageService 和 RuntimeService。</p>
 <ul>
 <li><p>ImageService 提供镜像服务，从仓库拉取镜像、查看和删除镜像的功能。</p>
 </li>
@@ -257,7 +257,7 @@
 <li>拼接docker相关接口需要的参数</li>
 <li>调用docker接口。<br>下面以创建容器举例说明。</li>
 </ul>
-<p><img src="cri.png"></p>
+<p><img src="%5Cimages%5Ccri.png"></p>
 
     
 
