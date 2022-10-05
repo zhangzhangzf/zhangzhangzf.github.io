@@ -6,22 +6,25 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://zhangzhangzf.github.io">
-  <title>test_my_site | 云原生</title>
+  <title>云原生</title>
   <meta name="generator" content="hexo-theme-yilia-plus">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   
-  <meta name="description" content="主要讨论云原生生态学习成果">
+  <meta name="description" content="#kubelt代码剖析##Container Runtime Interface（CRI） &amp;ensp;&amp;ensp;CRI定义了与容器运行时交互的接口，用于将K8S与特定的容器运行时解绑。下图展示kubelet、shim、container runtime、 runc之间关系。k8s 1.24前dockershim集成在kubelet中，docker是默认的容器引擎。我工作中在用dockershi">
 <meta property="og:type" content="article">
-<meta property="og:title" content="test_my_site">
-<meta property="og:url" content="https://zhangzhangzf.github.io/2022/09/25/test-my-site/index.html">
+<meta property="og:title" content="云原生">
+<meta property="og:url" content="https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/cri/cri/index.html">
 <meta property="og:site_name" content="云原生">
-<meta property="og:description" content="主要讨论云原生生态学习成果">
+<meta property="og:description" content="#kubelt代码剖析##Container Runtime Interface（CRI） &amp;ensp;&amp;ensp;CRI定义了与容器运行时交互的接口，用于将K8S与特定的容器运行时解绑。下图展示kubelet、shim、container runtime、 runc之间关系。k8s 1.24前dockershim集成在kubelet中，docker是默认的容器引擎。我工作中在用dockershi">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2022-09-25T10:49:56.000Z">
-<meta property="article:modified_time" content="2022-09-25T10:49:56.935Z">
+<meta property="og:image" content="https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/cri/cri/shim.png">
+<meta property="og:image" content="https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/cri/cri/cri.png">
+<meta property="article:published_time" content="2022-10-04T14:10:33.673Z">
+<meta property="article:modified_time" content="2022-10-05T07:34:04.333Z">
 <meta property="article:author" content="二明">
 <meta property="article:tag" content="docker、kubernetes、istio、jaeger、runc、etcd、flannel、calico...">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/cri/cri/shim.png">
   
     <link rel="alternative" href="/atom.xml" title="云原生" type="application/atom+xml">
   
@@ -227,60 +230,38 @@
               class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-test-my-site" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-k8s/kubelet/cri/cri" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
-      <header class="article-header">
-  
-  
-    <h1 class="article-title" itemprop="name">
-      test_my_site
-    </h1>
-  
-
-
-  
-  
-        
-        <span id="busuanzi_container_page_pv" style='display:none' class="archive-article-date">
-              <i class="icon-smile icon"></i> 阅读数：<span id="busuanzi_value_page_pv"></span>次
-        </span>
-
-<a href="/2022/09/25/test-my-site/" class="archive-article-date">
-        <time datetime="2022-09-25T10:49:56.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-09-25</time>
-</a>
-
-  
-  
-    
-<div style="margin-top:10px;">
-  <span class="post-time">
-    <span class="post-meta-item-icon">
-      <!-- fonts.scss -->
-      <!-- 百度字体平台:http://fontstore.baidu.com/static/editor/index.html -->
-      <i class="icon-statistics"></i>
-      <span class="post-meta-item-text"> 字数统计:</span>
-      <span class="post-count">0字</span>
-    </span>
-  </span>
-
-  <span class="post-time">
-    &nbsp; | &nbsp;
-    <span class="post-meta-item-icon">
-      <i class="icon-book icon"></i>
-      <span class="post-meta-item-text"> 阅读时长≈</span>
-      <span class="post-count">1分</span>
-    </span>
-  </span>
-</div>
-
-
-  
-  </header>
-  
   <div class="article-entry" itemprop="articleBody">
     
-    
+    <p>#kubelt代码剖析<br>##Container Runtime Interface（CRI）</p>
+<p>&ensp;&ensp;CRI定义了与容器运行时交互的接口，用于将K8S与特定的容器运行时解绑。下图展示kubelet、shim、container runtime、 runc之间关系。k8s 1.24前dockershim集成在kubelet中，docker是默认的容器引擎。<br>我工作中在用dockershim，下面以dockershim分析CRI。</p>
+<p><img src="shim.png"><br>&ensp;&ensp;kubelet 使用 gRPC 框架通过 UNIX Socket 与容器运行时（或CRl代理）进行通信。在这个过程中 kubelet 是客户端，CRI 代理（shim）是服务端。<br>Protocol Buffers API 包含两个 gRPC 服务：ImageService 和 RuntimeService。</p>
+<ul>
+<li><p>ImageService 提供镜像服务，从仓库拉取镜像、查看和删除镜像的功能。</p>
+</li>
+<li><p>RuntimeService 负责 Pod 和容器的生命周期管理，以及与容器的交互 (exec/attach/port-forward )。</p>
+</li>
+</ul>
+<p>上述两个接口封装在CRIService接口中</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">// CRIService includes all methods necessary for a CRI server.</span><br><span class="line">type CRIService interface &#123;</span><br><span class="line">	runtimeapi.RuntimeServiceServer</span><br><span class="line">	runtimeapi.ImageServiceServer</span><br><span class="line">	Start() error</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// RuntimeServiceServer is the server API for RuntimeService service.</span><br><span class="line">type RuntimeServiceServer interface &#123;</span><br><span class="line">	RunPodSandbox(context.Context, *RunPodSandboxRequest) (*RunPodSandboxResponse, error)</span><br><span class="line">	StopPodSandbox(context.Context, *StopPodSandboxRequest) (*StopPodSandboxResponse, error)</span><br><span class="line">	RemovePodSandbox(context.Context, *RemovePodSandboxRequest) (*RemovePodSandboxResponse, error)</span><br><span class="line">	PodSandboxStatus(context.Context, *PodSandboxStatusRequest) (*PodSandboxStatusResponse, error)</span><br><span class="line">	ListPodSandbox(context.Context, *ListPodSandboxRequest) (*ListPodSandboxResponse, error)</span><br><span class="line">	CreateContainer(context.Context, *CreateContainerRequest) (*CreateContainerResponse, error)</span><br><span class="line">	StartContainer(context.Context, *StartContainerRequest) (*StartContainerResponse, error)</span><br><span class="line">	StopContainer(context.Context, *StopContainerRequest) (*StopContainerResponse, error)</span><br><span class="line">	RemoveContainer(context.Context, *RemoveContainerRequest) (*RemoveContainerResponse, error)</span><br><span class="line">	ListContainers(context.Context, *ListContainersRequest) (*ListContainersResponse, error)</span><br><span class="line">	ContainerStatus(context.Context, *ContainerStatusRequest) (*ContainerStatusResponse, error)</span><br><span class="line">	UpdateContainerResources(context.Context, *UpdateContainerResourcesRequest) (*UpdateContainerResourcesResponse, error)</span><br><span class="line">	ReopenContainerLog(context.Context, *ReopenContainerLogRequest) (*ReopenContainerLogResponse, error)</span><br><span class="line">	ExecSync(context.Context, *ExecSyncRequest) (*ExecSyncResponse, error)</span><br><span class="line">	Exec(context.Context, *ExecRequest) (*ExecResponse, error)</span><br><span class="line">	Attach(context.Context, *AttachRequest) (*AttachResponse, error)</span><br><span class="line">	PortForward(context.Context, *PortForwardRequest) (*PortForwardResponse, error)</span><br><span class="line">	ContainerStats(context.Context, *ContainerStatsRequest) (*ContainerStatsResponse, error)</span><br><span class="line">	ListContainerStats(context.Context, *ListContainerStatsRequest) (*ListContainerStatsResponse, error)</span><br><span class="line">	UpdateRuntimeConfig(context.Context, *UpdateRuntimeConfigRequest) (*UpdateRuntimeConfigResponse, error)</span><br><span class="line">	Status(context.Context, *StatusRequest) (*StatusResponse, error)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// ImageServiceServer is the server API for ImageService service.</span><br><span class="line">type ImageServiceServer interface &#123;</span><br><span class="line">	ListImages(context.Context, *ListImagesRequest) (*ListImagesResponse, error)</span><br><span class="line">	ImageStatus(context.Context, *ImageStatusRequest) (*ImageStatusResponse, error)</span><br><span class="line">	PullImage(context.Context, *PullImageRequest) (*PullImageResponse, error)</span><br><span class="line">	RemoveImage(context.Context, *RemoveImageRequest) (*RemoveImageResponse, error)</span><br><span class="line">	ImageFsInfo(context.Context, *ImageFsInfoRequest) (*ImageFsInfoResponse, error)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>PreInitRuntimeService进行上述两个server接口的实例的初始化。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">// 代码源自src\k8s.io\kubernetes\pkg\kubelet\kuelet.go,仅摘录容器运行时初始化部分，仅介绍dockershim部分</span><br><span class="line">// PreInitRuntimeService will init runtime service before RunKubelet.</span><br><span class="line">func PreInitRuntimeService(kubeCfg *kubeletconfiginternal.KubeletConfiguration,</span><br><span class="line">	kubeDeps *Dependencies,</span><br><span class="line">	crOptions *config.ContainerRuntimeOptions,</span><br><span class="line">	containerRuntime string,</span><br><span class="line">	runtimeCgroups string,</span><br><span class="line">	remoteRuntimeEndpoint string,</span><br><span class="line">	remoteImageEndpoint string,</span><br><span class="line">	nonMasqueradeCIDR string) error &#123;</span><br><span class="line"></span><br><span class="line">......</span><br><span class="line">//containerRuntime、remoteRuntimeEndpoint、RemoteImageService来源配置</span><br><span class="line">switch containerRuntime &#123;</span><br><span class="line">	case kubetypes.DockerContainerRuntime:</span><br><span class="line">		klog.Warningf(&quot;Using dockershim is deprecated, please consider using a full-fledged CRI implementation&quot;)</span><br><span class="line">        //创建dockerShim的服务端</span><br><span class="line">		if err := runDockershim(</span><br><span class="line">			kubeCfg,</span><br><span class="line">			kubeDeps,</span><br><span class="line">			crOptions,</span><br><span class="line">			runtimeCgroups,</span><br><span class="line">			remoteRuntimeEndpoint,</span><br><span class="line">			remoteImageEndpoint,</span><br><span class="line">			nonMasqueradeCIDR,</span><br><span class="line">		); err != nil &#123;</span><br><span class="line">			return err</span><br><span class="line">		&#125;</span><br><span class="line">	case kubetypes.RemoteContainerRuntime:</span><br><span class="line">		// No-op.</span><br><span class="line">		break</span><br><span class="line">	default:</span><br><span class="line">		return fmt.Errorf(&quot;unsupported CRI runtime: %q&quot;, containerRuntime)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	var err error</span><br><span class="line">	//创建dockerShim容器管理部分的client</span><br><span class="line">	if kubeDeps.RemoteRuntimeService, err = remote.NewRemoteRuntimeService(remoteRuntimeEndpoint, kubeCfg.RuntimeRequestTimeout.Duration); err != nil &#123;</span><br><span class="line">		return err</span><br><span class="line">	&#125;</span><br><span class="line">	//创建dockerShim镜像管理部分的client</span><br><span class="line">	if kubeDeps.RemoteImageService, err = remote.NewRemoteImageService(remoteImageEndpoint, kubeCfg.RuntimeRequestTimeout.Duration); err != nil &#123;</span><br><span class="line">		return err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	kubeDeps.useLegacyCadvisorStats = cadvisor.UsingLegacyCadvisorStats(containerRuntime, remoteRuntimeEndpoint)</span><br><span class="line"></span><br><span class="line">	return nil</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&ensp;&ensp;dockershim 一方面有socket监听，处理CRI相关请求；另一方面建立与docker间grpc连接，在此过程中还进行了CNI初始化</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">代码源自src\k8s.io\kubernetes\pkg\kubelet\kuelet.go,仅介绍dockershim部分</span><br><span class="line">func runDockershim(kubeCfg *kubeletconfiginternal.KubeletConfiguration,</span><br><span class="line">	kubeDeps *Dependencies,</span><br><span class="line">	crOptions *config.ContainerRuntimeOptions,</span><br><span class="line">	runtimeCgroups string,</span><br><span class="line">	remoteRuntimeEndpoint string,</span><br><span class="line">	remoteImageEndpoint string,</span><br><span class="line">	nonMasqueradeCIDR string) error &#123;</span><br><span class="line">	pluginSettings := dockershim.NetworkPluginSettings&#123;</span><br><span class="line">		HairpinMode:        kubeletconfiginternal.HairpinMode(kubeCfg.HairpinMode),</span><br><span class="line">		NonMasqueradeCIDR:  nonMasqueradeCIDR,</span><br><span class="line">		PluginName:         crOptions.NetworkPluginName,</span><br><span class="line">		PluginConfDir:      crOptions.CNIConfDir,</span><br><span class="line">		PluginBinDirString: crOptions.CNIBinDir,</span><br><span class="line">		PluginCacheDir:     crOptions.CNICacheDir,</span><br><span class="line">		MTU:                int(crOptions.NetworkPluginMTU),</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// Create and start the CRI shim running as a grpc server.</span><br><span class="line">	streamingConfig := getStreamingConfig(kubeCfg, kubeDeps, crOptions)</span><br><span class="line">	dockerClientConfig := &amp;dockershim.ClientConfig&#123;</span><br><span class="line">		DockerEndpoint:            kubeDeps.DockerOptions.DockerEndpoint,</span><br><span class="line">		RuntimeRequestTimeout:     kubeDeps.DockerOptions.RuntimeRequestTimeout,</span><br><span class="line">		ImagePullProgressDeadline: kubeDeps.DockerOptions.ImagePullProgressDeadline,</span><br><span class="line">	&#125;</span><br><span class="line">	//下面这行进行dockerService的实例化，dockerService实现了CRI接口，</span><br><span class="line">	//主要做三件事情 （1）建立与docker间socket链接 （2）CNI初始化 （3）cgroup设置</span><br><span class="line">	ds, err := dockershim.NewDockerService(dockerClientConfig, crOptions.PodSandboxImage, streamingConfig,</span><br><span class="line">		&amp;pluginSettings, runtimeCgroups, kubeCfg.CgroupDriver, crOptions.DockershimRootDirectory)</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		return err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// The unix socket for kubelet &lt;-&gt; dockershim communication, dockershim start before runtime service init.</span><br><span class="line">	klog.V(5).Infof(&quot;RemoteRuntimeEndpoint: %q, RemoteImageEndpoint: %q&quot;,</span><br><span class="line">		remoteRuntimeEndpoint,</span><br><span class="line">		remoteImageEndpoint)</span><br><span class="line">	klog.V(2).Infof(&quot;Starting the GRPC server for the docker CRI shim.&quot;)</span><br><span class="line"></span><br><span class="line">	//dockershim提供的grpc服务</span><br><span class="line">	dockerServer := dockerremote.NewDockerServer(remoteRuntimeEndpoint, ds)</span><br><span class="line">	//启动grpc服务，请求的处理在dockerService实例中</span><br><span class="line">	if err := dockerServer.Start(); err != nil &#123;</span><br><span class="line">		return err</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	// Create dockerLegacyService when the logging driver is not supported.</span><br><span class="line">	supported, err := ds.IsCRISupportedLogDriver()</span><br><span class="line">	if err != nil &#123;</span><br><span class="line">		return err</span><br><span class="line">	&#125;</span><br><span class="line">	if !supported &#123;</span><br><span class="line">		kubeDeps.dockerLegacyService = ds</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	return nil</span><br></pre></td></tr></table></figure>
+
+<p>&ensp;&ensp;dockerShim作为服务端口，收到相关请求后由dockerService进行处理，dockerService实现了CRI接口，这些接口功能可以概述为：处理Kubelet收到的Pod相关的Action中的容器与镜像相关的操作。</p>
+<p>&ensp;&ensp;操作的实现主要是两件事情：</p>
+<ul>
+<li>拼接docker相关接口需要的参数</li>
+<li>调用docker接口。<br>下面以创建容器举例说明。</li>
+</ul>
+<p><img src="cri.png"></p>
+
     
 
     
@@ -326,7 +307,7 @@
         </li>
         <li>
           <strong>本文链接：</strong>
-          <a href="https://zhangzhangzf.github.io/2022/09/25/test-my-site/" title="test_my_site" target="_blank">https://zhangzhangzf.github.io/2022/09/25/test-my-site/</a>
+          <a href="https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/cri/cri/" title="" target="_blank">https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/cri/cri/</a>
         </li>
         
         <li>
@@ -393,7 +374,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-     <!-- <img src="//pan.baidu.com/share/qrcode?url=https://zhangzhangzf.github.io/2022/09/25/test-my-site/" alt="微信分享二维码"> -->
+     <!-- <img src="//pan.baidu.com/share/qrcode?url=https://zhangzhangzf.github.io/2022/10/04/k8s/kubelet/cri/cri/" alt="微信分享二维码"> -->
     </div>
 </div>
 
@@ -408,18 +389,18 @@
 
 <nav id="article-nav">
   
-    <a href="/2022/09/25/%E6%88%91%E7%9A%84%E5%8D%9A%E5%AE%A2/" id="article-nav-newer" class="article-nav-link-wrap">
+    <a href="/2022/10/04/k8s/kubelet/pod%E5%90%AF%E5%8A%A8/New%20Document/" id="article-nav-newer" class="article-nav-link-wrap">
       <i class="icon-circle-left"></i>
       <div class="article-nav-title">
         
-          我的博客
+          (no title)
         
       </div>
     </a>
   
   
-    <a href="/2014/01/21/hello-world/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">Hello，World!你好，世界！</div>
+    <a href="/2022/09/25/golang/%E6%88%91%E7%9A%84%E5%8D%9A%E5%AE%A2-1/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">我的博客</div>
       <i class="icon-circle-right"></i>
     </a>
   
